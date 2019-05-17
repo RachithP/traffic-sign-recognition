@@ -23,8 +23,23 @@ def showImage(image):
 	cv2.imshow("Display frame",image)
 	cv2.waitKey(0)
 
-TRAINING_IMAGE_SIZE_X = 80
-TRAINING_IMAGE_SIZE_Y = 80
+winSize = (64,64)
+blockSize = (16,16)
+blockStride = (8,8)
+cellSize = (8,8)
+nbins = 16
+derivAperture = 1
+winSigma = 4.
+histogramNormType = 0
+L2HysThreshold = 2.0000000000000001e-01
+gammaCorrection = 0
+nlevels = 64
+hog = cv2.HOGDescriptor(winSize,blockSize,blockStride,cellSize,nbins,derivAperture,winSigma,histogramNormType,L2HysThreshold,gammaCorrection,nlevels)
+
+TRAINING_IMAGE_SIZE_X = 64
+TRAINING_IMAGE_SIZE_Y = 64
+
+nImagesCutoff = 1000
 
 # Iterate through each image, convert to BGR, undistort(function takes all channels in input)
 pathToImages = 'Training'
@@ -36,8 +51,8 @@ try:
 except:
 	print 'Readme file not present'
 
-trainingFeaturesList = []
-trainingLabelsList = []
+trainingFeaturesArr = []
+trainingLabelsArr= []
 
 nImageCounter = 0
 # Iterate through images in each fodlers to compile on list of traffic sign images
@@ -57,15 +72,25 @@ for folder in folders:
 		# showImage(trainImage)
 
 		# We have to tune these
-		fd = hog(trainImage, orientations=8, pixels_per_cell=(TRAINING_IMAGE_SIZE_X, TRAINING_IMAGE_SIZE_Y),cells_per_block=(1, 1))
-		trainingFeaturesList.append(fd)
-		trainingLabelsList.append(1)
-	# if nImageCounter>500:
-	# 	break
+
+		# fd = hog.compute(trainImage,winStride,padding,locations)
+		fd = hog.compute(trainImage)
+		fd = fd.T
+		if nImageCounter==1:
+			trainingFeaturesArr = fd
+			trainingLabelsArr = np.array(1)
+		else:
+			trainingFeaturesArr = np.vstack((trainingFeaturesArr,fd))
+			trainingLabelsArr = np.append(trainingLabelsArr,1)
+		if nImageCounter>=nImagesCutoff:
+			break
+	if nImageCounter>=nImagesCutoff:
+			break
 
 nImageCounter = 0
 NegativeImages = glob.glob("negative_images/*.jpg")
 for imagePath in NegativeImages:
+	print nImageCounter
 	nImageCounter += 1
 
 	# load training image
@@ -79,38 +104,34 @@ for imagePath in NegativeImages:
 	# showImage(trainImage)
 
 	# We have to tune these
-	fd = hog(trainImage, orientations=8, pixels_per_cell=(TRAINING_IMAGE_SIZE_X, TRAINING_IMAGE_SIZE_Y),cells_per_block=(1, 1))
-	print fd
-	trainingFeaturesList.append(fd)
-	trainingLabelsList.append(2)
-	# if nImageCounter>500:
-	# 	break
+	# fd = hog.compute(trainImage,winStride,padding,locations)
+	fd = hog.compute(trainImage)
+	fd = fd.T
+	trainingFeaturesArr = np.vstack((trainingFeaturesArr,fd))
+	trainingLabelsArr = np.append(trainingLabelsArr,2)
+	if nImageCounter>=nImagesCutoff:
+		break
 
 #Initializing svm classifier
 clf = svm.SVC()
-trainingFeatures = np.array(trainingFeaturesList)
-trainingLabels = np.array(trainingLabelsList)
-trainingLabels = trainingLabels.reshape(-1,1)
-data_frame = np.hstack((trainingFeatures,trainingLabels))
+trainingLabelsArr = trainingLabelsArr.reshape(-1,1)
+data_frame = np.hstack((trainingFeaturesArr,trainingLabelsArr))
 np.random.shuffle(data_frame)
-print trainingFeatures.shape
-print data_frame.shape
 
 #Spilting into training and testing data
 percentage = 80
-partitionIndex = int(len(trainingFeaturesList)*percentage/100)
+partitionIndex = int(trainingLabelsArr.shape[0]*percentage/100)
 print partitionIndex
 
 x_train, x_test = data_frame[:partitionIndex,:-1],  data_frame[partitionIndex:,:-1]
 y_train, y_test = data_frame[:partitionIndex,-1:].ravel() , data_frame[partitionIndex:,-1:].ravel()
 
-# y_train = y_train.reshape(-1,1)
-
-
 print x_train.shape
 print y_train.shape
-
+print y_train
 clf.fit(x_train,y_train)
+
+print 'predicting.......'
 
 y_pred = clf.predict(x_test)
 
