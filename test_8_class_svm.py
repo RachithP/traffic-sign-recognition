@@ -16,8 +16,8 @@ from skimage.feature import hog
 import numpy as np
 import cv2
 from sklearn import svm
-from sklearn.metrics import classification_report,accuracy_score
 import pickle
+from sklearn.metrics import classification_report,accuracy_score
 
 def showImage(image):
 	cv2.namedWindow("Display frame",cv2.WINDOW_NORMAL)
@@ -41,11 +41,15 @@ hog = cv2.HOGDescriptor(winSize,blockSize,blockStride,cellSize,nbins,derivApertu
 TRAINING_IMAGE_SIZE_X = 64
 TRAINING_IMAGE_SIZE_Y = 64
 
-# Iterate through each image, convert to BGR, undistort(function takes all channels in input)
-pathToImages = 'Training'
-folders = glob.glob(pathToImages+"/*")
+nImagesCutoff = 1000
 
-trainingLabelShortened = [45, 21, 38, 35, 17, 1, 14, 19]
+# load the model from disk
+filename = 'model1.sav'
+loaded_model = pickle.load(open(filename, 'rb'))
+
+# Iterate through each image, convert to BGR, undistort(function takes all channels in input)
+pathToImages = 'Testing'
+folders = glob.glob(pathToImages+"/*")
 
 # Removing readme file
 try:
@@ -54,20 +58,19 @@ except:
 	print 'Readme file not present'
 folders.sort()
 
-trainingFeaturesArr = []
-trainingLabelsArr= []
+testingFeaturesArr = []
+testingLabelsArr= []
+trainingLabelShortened = [45, 21, 38, 35, 17, 1, 14, 19]
+
 nImageCounter = 0
 # Iterate through images in each fodlers to compile on list of traffic sign images
 for label,folder in enumerate(folders):
 	if label not in trainingLabelShortened:
 		continue
-	print 'label is:',label
-	nImageCounter1 = 0
 	PositiveImages = glob.glob(folder+"/*.ppm")
-	print folder
 	for imagePath in PositiveImages:
+		print nImageCounter
 		nImageCounter += 1
-		nImageCounter1 += 1
 
 		# load training image
 		image = cv2.imread(imagePath)
@@ -85,30 +88,39 @@ for label,folder in enumerate(folders):
 		fd = hog.compute(trainImage)
 		fd = fd.T
 		if nImageCounter==1:
-			trainingFeaturesArr = fd
-			trainingLabelsArr = np.array(1)
+			testingFeaturesArr = fd
+			testingLabelsArr = np.array(1)
 		else:
-			trainingFeaturesArr = np.vstack((trainingFeaturesArr,fd))
-			trainingLabelsArr = np.append(trainingLabelsArr,label)
-	print 'Number of images is:',nImageCounter1
+			testingFeaturesArr = np.vstack((testingFeaturesArr,fd))
+			testingLabelsArr = np.append(testingLabelsArr,label)
 
 #Initializing svm classifier
-# model = svm.SVC(C=1.0, kernel='rbf', degree=3, gamma='auto_deprecated', coef0=0.0, shrinking=True, probability=False, tol=0.001, cache_size=200, class_weight='balanced')
-model = svm.SVC(gamma=0.01)
-trainingLabelsArr = trainingLabelsArr.reshape(-1,1)
-data_frame = np.hstack((trainingFeaturesArr,trainingLabelsArr))
+testingLabelsArr = testingLabelsArr.reshape(-1,1)
+data_frame = np.hstack((testingFeaturesArr,testingLabelsArr))
 np.random.shuffle(data_frame)
 
-x_train = data_frame[:,:-1]
-y_train = data_frame[:,-1:].ravel()
+x_test = data_frame[:,:-1]
+y_test = data_frame[:,-1:].ravel()
 
-print x_train.shape
-print y_train.shape
-print y_train
-model.fit(x_train,y_train)
 
-filename = 'model1.sav'
-pickle.dump(model, open(filename, 'wb'))
+print x_test.shape
+print y_test.shape
+print 'predicting.......'
+y_pred = loaded_model.predict(x_test)
+
+# y_pred = model.predict(x_test)
+print("Accuracy: "+str(accuracy_score(y_test, y_pred)))
+print('\n')
+print(classification_report(y_test, y_pred))
+
+# print("Accuracy: "+str(accuracy_score(y_test, y_pred)))
+# print('\n')
+# print(classification_report(y_test, y_pred))
+
+# # save the model to disk
+# filename = 'model1.sav'
+# pickle.dump(model, open(filename, 'wb'))
+
 
 # print 'Number of training images'
 # print nImageCounter
