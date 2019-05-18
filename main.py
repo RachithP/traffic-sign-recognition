@@ -22,7 +22,7 @@ import pickle
 def showImage(image):
 	cv2.namedWindow("Display frame", cv2.WINDOW_NORMAL)
 	cv2.imshow("Display frame", image)
-	cv2.waitKey(100)
+	cv2.waitKey(0)
 
 
 # def denoiseMultiColor():
@@ -97,15 +97,40 @@ def classifier_init():
 
 	return hog,two_class_model,correct_sign_model,eight_class_model,nine_class_model
 
+def scaleWindows(image,(x, y,w,h),scale,iterations):
+	center_x = x+w/2
+	center_y = y+h/2
+	newScale = scale
+	for k in range(1,iterations+1):
+		print newScale
+		scaledW = w*newScale
+		scaledH = h*newScale
+		scaledX = center_x-scaledW/2
+		scaledY = center_y-scaledH/2
+		print '-----'
+		print w,h
+		print int(scaledY),int(scaledY+scaledH),int(scaledX),int(scaledX+scaledW)
+		if 0<int(scaledY)<image.shape[0] and 0<int(scaledY+scaledH)<image.shape[0] and 0<int(scaledX)<image.shape[1] and 0<int(scaledX+scaledW)<image.shape[1]:
+			print 'yielding'
+			yield image[int(scaledY):int(scaledY+scaledH),int(scaledX):int(scaledX+scaledW)]
+		newScale = newScale*scale
+	# for k in range(1,iterations+1):
+	# 	newScale = scale*k
+	# 	scaledW = w/newScale
+	# 	scaledH = h/newScale
+	# 	scaledX = center_x-scaledW/2
+	# 	scaledY = center_y-scaledH/2
+	# 	yield image[int(center_y):int(center_y+scaledH),int(scaledX):int(scaledX+scaledW)]
+
 def main():
 
 	hog,two_class_model,correct_sign_model,eight_class_model,nine_class_model = classifier_init()
 
 	blue_lower = np.array([80, 90, 0], np.uint8)
 	blue_upper = np.array([200, 200, 255], np.uint8)
-	red_lower_one = np.array([0, 0, 0], np.uint8)
+	red_lower_one = np.array([0, 100, 0], np.uint8)
 	red_upper_one = np.array([20, 255, 255], np.uint8)
-	red_lower_two = np.array([160, 0, 0], np.uint8)
+	red_lower_two = np.array([160, 100, 0], np.uint8)
 	red_upper_two = np.array([180, 255, 255], np.uint8)
 
 	path_to_images = 'denoised_images'
@@ -115,7 +140,7 @@ def main():
 	files_hsv = glob.glob(path_to_images_hsv + "/*.jpg")
 	files_hsv.sort()
 
-	for index in range(len(files)):
+	for index in range(0,len(files)):
 
 		image_denoise = cv2.imread(path_to_images + "/frame" + str(index) + ".jpg", -1)  # read image
 
@@ -130,9 +155,10 @@ def main():
 
 		# showImage(np.hstack((red_hsv_one, red_hsv_two, red_hsv)))
 		# continue
-
-		b_, g_, r_ = cv2.split(image_denoise)  # split into channels
-
+		try:
+			b_, g_, r_ = cv2.split(image_denoise)  # split into channels
+		except:
+			continue
 		b = contractStretching(b_).astype(float)  # adaptive histogram equivalent on each channel
 		g = contractStretching(g_).astype(float)
 		r = contractStretching(r_).astype(float)
@@ -174,33 +200,45 @@ def main():
 		final_image = image_denoise.copy()
 
 		_, red_contours, _ = cv2.findContours(red_image, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-		# for cnt in red_contours:
-		# 	x, y, w, h = cv2.boundingRect(cnt)
-		# 	cv2.rectangle(image_denoise, (x, y), (x + w, y + h), (0, 0, 255), 2)
-		# 	if 150.0 < cv2.contourArea(cnt) < 4000.0:
-		# 		x, y, w, h = cv2.boundingRect(cnt)
-		# 		cv2.rectangle(image_denoise, (x, y), (x + w, y + h), (0, 255, 255), 2)
-		# 		x, y, w, h = cv2.boundingRect(cnt)
-		# 		if 0.4 < float(h) / w < 2.5:
-		# 			cv2.rectangle(final_image, (x, y), (x + w, y + h), (200, 0, 200), 2)
+		for cnt in red_contours:
+			x, y, w, h = cv2.boundingRect(cnt)
+			cv2.rectangle(image_denoise, (x, y), (x + w, y + h), (0, 0, 255), 2)
+			if 400.0 < cv2.contourArea(cnt) < 3000.0:
+				x, y, w, h = cv2.boundingRect(cnt)
+				cv2.rectangle(image_denoise, (x, y), (x + w, y + h), (0, 255, 255), 2)
+				x, y, w, h = cv2.boundingRect(cnt)
+				if 0.4 < float(h) / w < 2.5:
+					croppedWindow = final_image[y:y+h,x:x+w]
+					prediction = classifier(croppedWindow,hog,nine_class_model)
+					# if prediction!=62:
+					cv2.rectangle(final_image, (x, y), (x + w, y + h), (200, 0, 200), 2)
+					cv2.putText(final_image,str(prediction), (x, y),cv2.FONT_HERSHEY_SIMPLEX,1,(255,255,255),2)
 
 		_, blue_contours, _ = cv2.findContours(blue_image, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
 		for cnt in blue_contours:
 			x, y, w, h = cv2.boundingRect(cnt)
 			cv2.rectangle(image_denoise, (x, y), (x + w, y + h), (255, 0, 0), 2)
-			if 250.0 < cv2.contourArea(cnt) < 5000.0:
+			if 250.0 < cv2.contourArea(cnt) < 6000.0:
 				x, y, w, h = cv2.boundingRect(cnt)
 				cv2.rectangle(image_denoise, (x, y), (x + w, y + h), (255, 255, 0), 2)
 				x, y, w, h = cv2.boundingRect(cnt)
 				if 0.3 < float(h) / w < 3.0:
-					cv2.rectangle(final_image, (x, y), (x + w, y + h), (255, 100, 100), 2)
+					scaledWindows = scaleWindows(final_image,(x, y,w,h),1.1,5)
 					croppedWindow = final_image[y:y+h,x:x+w]
-					prediction = classifier(croppedWindow,hog,two_class_model)
+					prediction = classifier(croppedWindow,hog,nine_class_model)
+					# if prediction!=62:
+					cv2.rectangle(final_image, (x, y), (x + w, y + h), (255, 100, 100), 2)
 					cv2.putText(final_image,str(prediction), (x, y),cv2.FONT_HERSHEY_SIMPLEX,1,(255,255,255),2)
+					for scaleWindow in scaledWindows:
+						prediction = classifier(scaleWindow,hog,nine_class_model)
+						# if prediction!=62:
+						cv2.rectangle(final_image, (x, y), (x + w, y + h), (255, 100, 100), 2)
+						cv2.putText(final_image,str(prediction), (x, y),cv2.FONT_HERSHEY_SIMPLEX,1,(255,255,255),2)
+
 
 		cv2.imwrite("outputs/testing/frame"+str(index)+".jpg", image_denoise)
 		cv2.imwrite("outputs/testing/final/frame"+str(index)+".jpg", final_image)
-		showImage(np.hstack((image_denoise, final_image)))
+		# showImage(np.hstack((image_denoise, final_image)))
 		continue
 
 		# # -------------------------------------------------------
