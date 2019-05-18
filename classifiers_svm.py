@@ -32,7 +32,7 @@ def classifier(image,classifierNumber):
 	if classifierNumber==1:
 		filename = 'eight_class_svm.sav'
 	elif classifierNumber==2:
-		filename = 'eight_class_svm.sav'
+		filename = 'correct_sign_2_class_svm.sav'
 	elif classifierNumber==3:
 		filename = 'two_class_svm.sav'
 	loaded_model = pickle.load(open(filename, 'rb'))
