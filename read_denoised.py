@@ -74,9 +74,9 @@ def main():
 
 	blue_lower = np.array([80, 90, 0], np.uint8)
 	blue_upper = np.array([200, 200, 255], np.uint8)
-	red_lower_one = np.array([0, 0, 0], np.uint8)
+	red_lower_one = np.array([0, 100, 0], np.uint8)
 	red_upper_one = np.array([20, 255, 255], np.uint8)
-	red_lower_two = np.array([160, 0, 0], np.uint8)
+	red_lower_two = np.array([160, 100, 0], np.uint8)
 	red_upper_two = np.array([180, 255, 255], np.uint8)
 
 	path_to_images = 'denoised_images'
@@ -148,25 +148,23 @@ def main():
 		final_image = image_denoise.copy()
 
 		_, red_contours, _ = cv2.findContours(red_image, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-		for cnt in red_contours:
-			x, y, w, h = cv2.boundingRect(cnt)
-			cv2.rectangle(image_denoise, (x, y), (x + w, y + h), (0, 0, 255), 2)
-			if 150.0 < cv2.contourArea(cnt) < 4000.0:
-				x, y, w, h = cv2.boundingRect(cnt)
-				cv2.rectangle(image_denoise, (x, y), (x + w, y + h), (0, 255, 255), 2)
-				x, y, w, h = cv2.boundingRect(cnt)
-				if 0.4 < float(h) / w < 2.5:
-					cv2.rectangle(final_image, (x, y), (x + w, y + h), (200, 0, 200), 2)
+		# for cnt in red_contours:
+		# 	x, y, w, h = cv2.boundingRect(cnt)
+		# 	cv2.rectangle(image_denoise, (x, y), (x + w, y + h), (0, 0, 255), 2)
+		# 	if 150.0 < cv2.contourArea(cnt) < 4000.0:
+		# 		x, y, w, h = cv2.boundingRect(cnt)
+		# 		cv2.rectangle(image_denoise, (x, y), (x + w, y + h), (0, 255, 255), 2)
+		# 		x, y, w, h = cv2.boundingRect(cnt)
+		# 		if 0.4 < float(h) / w < 2.5:
+		# 			cv2.rectangle(final_image, (x, y), (x + w, y + h), (200, 0, 200), 2)
 
 		_, blue_contours, _ = cv2.findContours(blue_image, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
 		for cnt in blue_contours:
 			x, y, w, h = cv2.boundingRect(cnt)
 			cv2.rectangle(image_denoise, (x, y), (x + w, y + h), (255, 0, 0), 2)
-			if 250.0 < cv2.contourArea(cnt) < 5000.0:
-				x, y, w, h = cv2.boundingRect(cnt)
+			if 100.0 < float(w)*h < 5000.0:
 				cv2.rectangle(image_denoise, (x, y), (x + w, y + h), (255, 255, 0), 2)
-				x, y, w, h = cv2.boundingRect(cnt)
-				if 0.4 < float(h) / w < 2.5:
+				if 0.3 < float(h) / w < 3.3:
 					cv2.rectangle(final_image, (x, y), (x + w, y + h), (255, 100, 100), 2)
 
 		# cv2.imwrite("outputs/testing/frame"+str(index)+".jpg", image_denoise)

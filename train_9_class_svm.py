@@ -130,21 +130,23 @@ for imagePath in NegativeImages:
 	# fd = hog.compute(trainImage,winStride,padding,locations)
 	fd = hog.compute(trainImage)
 	fd = fd.T
-	trainingFeaturesArr = np.vstack((trainingFeaturesArr,fd))
-	trainingLabelsArr = np.append(trainingLabelsArr,label+1)
+	trainingFeaturesArr = np.vstack((trainingFeaturesArr, fd))
+	trainingLabelsArr = np.append(trainingLabelsArr, label+1)
 	if nImageCounter>=nImagesCutoff:
 		break
-print 'Number of positive',nPositiveImageCounter
-print 'Number of negative_images',nImageCounter
+
+print 'Number of positive', nPositiveImageCounter
+print 'Number of negative_images', nImageCounter
 
 #Initializing svm classifier
 # model = svm.SVC(C=1.0, kernel='rbf', degree=3, gamma='auto_deprecated', coef0=0.0, shrinking=True, probability=False, tol=0.001, cache_size=200, class_weight='balanced')
 model = svm.SVC(gamma=0.01,class_weight='balanced')
 trainingLabelsArr = trainingLabelsArr.reshape(-1,1)
 data_frame = np.hstack((trainingFeaturesArr,trainingLabelsArr))
+
 np.random.shuffle(data_frame)
 
-#Spilting into training and testing data
+#Spliting into training and testing data
 percentage = 80
 partitionIndex = int(trainingLabelsArr.shape[0]*percentage/100)
 print partitionIndex
