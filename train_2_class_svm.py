@@ -15,6 +15,7 @@ import glob
 from skimage.feature import hog
 import numpy as np
 import cv2
+import pickle
 from sklearn import svm
 from sklearn.metrics import classification_report,accuracy_score
 
@@ -23,27 +24,53 @@ def showImage(image):
 	cv2.imshow("Display frame",image)
 	cv2.waitKey(0)
 
-TRAINING_IMAGE_SIZE_X = 80
-TRAINING_IMAGE_SIZE_Y = 80
+winSize = (64,64)
+blockSize = (16,16)
+blockStride = (8,8)
+cellSize = (8,8)
+nbins = 16
+derivAperture = 1
+winSigma = -1.
+histogramNormType = 0
+L2HysThreshold = 2.0000000000000001e-01
+gammaCorrection = 2
+nlevels = 64
+SignedGradients = True
+hog = cv2.HOGDescriptor(winSize,blockSize,blockStride,cellSize,nbins,derivAperture,winSigma,histogramNormType,L2HysThreshold,gammaCorrection,nlevels,SignedGradients)
+
+TRAINING_IMAGE_SIZE_X = 64
+TRAINING_IMAGE_SIZE_Y = 64
+
+nImagesCutoff = 2200
 
 # Iterate through each image, convert to BGR, undistort(function takes all channels in input)
 pathToImages = 'Training'
-folders = glob.glob(pathToImages+"/*")
+trainingFolders = glob.glob(pathToImages+"/*")
 
 # Removing readme file
 try:
-	folders.remove(pathToImages+'/Readme.txt')
+	trainingFolders.remove(pathToImages+'/Readme.txt')
 except:
 	print 'Readme file not present'
 
-trainingFeaturesList = []
-trainingLabelsList = []
+pathToImages = 'Training'
+testingFolders = glob.glob(pathToImages+"/*")
+
+# Removing readme file
+try:
+	testingFolders.remove(pathToImages+'/Readme.txt')
+except:
+	print 'Readme file not present'
+folders = trainingFolders+testingFolders
+trainingFeaturesArr = []
+trainingLabelsArr= []
 
 nImageCounter = 0
 # Iterate through images in each fodlers to compile on list of traffic sign images
 for folder in folders:
 	PositiveImages = glob.glob(folder+"/*.ppm")
 	for imagePath in PositiveImages:
+		print nImageCounter
 		nImageCounter += 1
 
 		# load training image
@@ -57,15 +84,29 @@ for folder in folders:
 		# showImage(trainImage)
 
 		# We have to tune these
-		fd = hog(trainImage, orientations=8, pixels_per_cell=(TRAINING_IMAGE_SIZE_X, TRAINING_IMAGE_SIZE_Y),cells_per_block=(1, 1))
-		trainingFeaturesList.append(fd)
-		trainingLabelsList.append(1)
-	# if nImageCounter>500:
-	# 	break
+
+		# fd = hog.compute(trainImage,winStride,padding,locations)
+		fd = hog.compute(trainImage)
+		fd = fd.T
+		if nImageCounter==1:
+			trainingFeaturesArr = fd
+			trainingLabelsArr = np.array(1)
+		else:
+			trainingFeaturesArr = np.vstack((trainingFeaturesArr,fd))
+			trainingLabelsArr = np.append(trainingLabelsArr,1)
+		if nImageCounter>=nImagesCutoff:
+			break
+	if nImageCounter>=nImagesCutoff:
+			break
+
+nPostiveImages = nImageCounter
 
 nImageCounter = 0
-NegativeImages = glob.glob("negative_images/*.jpg")
+NegativeImages1 = glob.glob("negative_images_1/*.jpg")
+NegativeImages2 = glob.glob("negative_images_2/*.jpg")
+NegativeImages = NegativeImages1+NegativeImages2
 for imagePath in NegativeImages:
+	print nImageCounter
 	nImageCounter += 1
 
 	# load training image
@@ -79,38 +120,36 @@ for imagePath in NegativeImages:
 	# showImage(trainImage)
 
 	# We have to tune these
-	fd = hog(trainImage, orientations=8, pixels_per_cell=(TRAINING_IMAGE_SIZE_X, TRAINING_IMAGE_SIZE_Y),cells_per_block=(1, 1))
-	print fd
-	trainingFeaturesList.append(fd)
-	trainingLabelsList.append(2)
-	# if nImageCounter>500:
-	# 	break
+	# fd = hog.compute(trainImage,winStride,padding,locations)
+	fd = hog.compute(trainImage)
+	fd = fd.T
+	trainingFeaturesArr = np.vstack((trainingFeaturesArr,fd))
+	trainingLabelsArr = np.append(trainingLabelsArr,2)
+	if nImageCounter>=nImagesCutoff:
+		break
+print 'Number of positive',nPostiveImages
+print 'Number of negative_images',nImageCounter
 
 #Initializing svm classifier
-clf = svm.SVC()
-trainingFeatures = np.array(trainingFeaturesList)
-trainingLabels = np.array(trainingLabelsList)
-trainingLabels = trainingLabels.reshape(-1,1)
-data_frame = np.hstack((trainingFeatures,trainingLabels))
+clf = svm.SVC(gamma=0.1)
+trainingLabelsArr = trainingLabelsArr.reshape(-1,1)
+data_frame = np.hstack((trainingFeaturesArr,trainingLabelsArr))
 np.random.shuffle(data_frame)
-print trainingFeatures.shape
-print data_frame.shape
 
 #Spilting into training and testing data
 percentage = 80
-partitionIndex = int(len(trainingFeaturesList)*percentage/100)
+partitionIndex = int(trainingLabelsArr.shape[0]*percentage/100)
 print partitionIndex
 
 x_train, x_test = data_frame[:partitionIndex,:-1],  data_frame[partitionIndex:,:-1]
 y_train, y_test = data_frame[:partitionIndex,-1:].ravel() , data_frame[partitionIndex:,-1:].ravel()
 
-# y_train = y_train.reshape(-1,1)
-
-
 print x_train.shape
 print y_train.shape
-
+print y_train
 clf.fit(x_train,y_train)
+
+print 'predicting.......'
 
 y_pred = clf.predict(x_test)
 
@@ -118,5 +157,5 @@ print("Accuracy: "+str(accuracy_score(y_test, y_pred)))
 print('\n')
 print(classification_report(y_test, y_pred))
 
-# print 'Number of training images'
-# print nImageCounter
+filename = 'two_class_svm.sav'
+pickle.dump(clf, open(filename, 'wb'))
