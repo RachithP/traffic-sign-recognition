@@ -46,7 +46,7 @@ TRAINING_IMAGE_SIZE_Y = 64
 nImagesCutoff = 1000
 
 # load the model from disk
-filename = 'model1.sav'
+filename = 'eight_class_svm.sav'
 loaded_model = pickle.load(open(filename, 'rb'))
 
 # Iterate through each image, convert to BGR, undistort(function takes all channels in input)

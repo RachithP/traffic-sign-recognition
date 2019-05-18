@@ -20,7 +20,23 @@ import pickle
 import random
 from sklearn.metrics import classification_report,accuracy_score
 
-def eight_sign_classifier(image):
+'''
+Pass 1 for classification between whether the image is a sign or not, Output: 1 = sign, 2 = Not sign
+Pass 2 for classification between whether the image is one of the signs we need or not, Output: 1 = yes, 2 = no
+Pass 3 for classification between whether the image is a sign or not, Output: label of sign
+
+'''
+
+def classifier(image,classifierNumber):
+	# load the model from disk
+	if classifierNumber==1:
+		filename = 'eight_class_svm.sav'
+	elif classifierNumber==2:
+		filename = 'eight_class_svm.sav'
+	elif classifierNumber==3:
+		filename = 'two_class_svm.sav'
+	loaded_model = pickle.load(open(filename, 'rb'))
+	
 	winSize = (64,64)
 	blockSize = (16,16)
 	blockStride = (8,8)
@@ -53,3 +69,5 @@ def eight_sign_classifier(image):
 	# print 'Class is :',y_pred
 
 	return y_pred[0]
+
+

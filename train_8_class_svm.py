@@ -133,5 +133,5 @@ print("Accuracy: "+str(accuracy_score(y_test, y_pred)))
 print('\n')
 print(classification_report(y_test, y_pred))
 
-filename = 'model1.sav'
+filename = 'eight_class_svm.sav'
 pickle.dump(model, open(filename, 'wb'))

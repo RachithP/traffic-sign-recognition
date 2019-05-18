@@ -15,6 +15,7 @@ import glob
 from skimage.feature import hog
 import numpy as np
 import cv2
+import pickle
 from sklearn import svm
 from sklearn.metrics import classification_report,accuracy_score
 
@@ -29,28 +30,38 @@ blockStride = (8,8)
 cellSize = (8,8)
 nbins = 16
 derivAperture = 1
-winSigma = 4.
+winSigma = -1.
 histogramNormType = 0
 L2HysThreshold = 2.0000000000000001e-01
-gammaCorrection = 0
+gammaCorrection = 2
 nlevels = 64
-hog = cv2.HOGDescriptor(winSize,blockSize,blockStride,cellSize,nbins,derivAperture,winSigma,histogramNormType,L2HysThreshold,gammaCorrection,nlevels)
+SignedGradients = True
+hog = cv2.HOGDescriptor(winSize,blockSize,blockStride,cellSize,nbins,derivAperture,winSigma,histogramNormType,L2HysThreshold,gammaCorrection,nlevels,SignedGradients)
 
 TRAINING_IMAGE_SIZE_X = 64
 TRAINING_IMAGE_SIZE_Y = 64
 
-nImagesCutoff = 1000
+nImagesCutoff = 2200
 
 # Iterate through each image, convert to BGR, undistort(function takes all channels in input)
 pathToImages = 'Training'
-folders = glob.glob(pathToImages+"/*")
+trainingFolders = glob.glob(pathToImages+"/*")
 
 # Removing readme file
 try:
-	folders.remove(pathToImages+'/Readme.txt')
+	trainingFolders.remove(pathToImages+'/Readme.txt')
 except:
 	print 'Readme file not present'
 
+pathToImages = 'Training'
+testingFolders = glob.glob(pathToImages+"/*")
+
+# Removing readme file
+try:
+	testingFolders.remove(pathToImages+'/Readme.txt')
+except:
+	print 'Readme file not present'
+folders = trainingFolders+testingFolders
 trainingFeaturesArr = []
 trainingLabelsArr= []
 
@@ -59,6 +70,7 @@ nImageCounter = 0
 for folder in folders:
 	PositiveImages = glob.glob(folder+"/*.ppm")
 	for imagePath in PositiveImages:
+		print nImageCounter
 		nImageCounter += 1
 
 		# load training image
@@ -87,8 +99,12 @@ for folder in folders:
 	if nImageCounter>=nImagesCutoff:
 			break
 
+nPostiveImages = nImageCounter
+
 nImageCounter = 0
-NegativeImages = glob.glob("negative_images/*.jpg")
+NegativeImages1 = glob.glob("negative_images_1/*.jpg")
+NegativeImages2 = glob.glob("negative_images_2/*.jpg")
+NegativeImages = NegativeImages1+NegativeImages2
 for imagePath in NegativeImages:
 	print nImageCounter
 	nImageCounter += 1
@@ -111,9 +127,11 @@ for imagePath in NegativeImages:
 	trainingLabelsArr = np.append(trainingLabelsArr,2)
 	if nImageCounter>=nImagesCutoff:
 		break
+print 'Number of positive',nPostiveImages
+print 'Number of negative_images',nImageCounter
 
 #Initializing svm classifier
-clf = svm.SVC()
+clf = svm.SVC(gamma=0.1)
 trainingLabelsArr = trainingLabelsArr.reshape(-1,1)
 data_frame = np.hstack((trainingFeaturesArr,trainingLabelsArr))
 np.random.shuffle(data_frame)
@@ -139,5 +157,5 @@ print("Accuracy: "+str(accuracy_score(y_test, y_pred)))
 print('\n')
 print(classification_report(y_test, y_pred))
 
-# print 'Number of training images'
-# print nImageCounter
+filename = 'two_class_svm.sav'
+pickle.dump(clf, open(filename, 'wb'))
