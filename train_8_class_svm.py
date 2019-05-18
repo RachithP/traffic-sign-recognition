@@ -41,30 +41,44 @@ hog = cv2.HOGDescriptor(winSize,blockSize,blockStride,cellSize,nbins,derivApertu
 TRAINING_IMAGE_SIZE_X = 64
 TRAINING_IMAGE_SIZE_Y = 64
 
-# Iterate through each image, convert to BGR, undistort(function takes all channels in input)
-pathToImages = 'Training'
-folders = glob.glob(pathToImages+"/*")
-
 trainingLabelShortened = [45, 21, 38, 35, 17, 1, 14, 19]
-
-# Removing readme file
-try:
-	folders.remove(pathToImages+'/Readme.txt')
-except:
-	print 'Readme file not present'
-folders.sort()
-
 trainingFeaturesArr = []
 trainingLabelsArr= []
 nImageCounter = 0
+
+# Getting images in training
+pathToImages = 'Training'
+foldersTraining = glob.glob(pathToImages+"/*")
+# Removing readme file
+try:
+	foldersTraining.remove(pathToImages+'/Readme.txt')
+except:
+	print 'Readme file not present'
+foldersTraining.sort()
+
+# Getting images in training
+pathToImages = 'Testing'
+foldersTesting = glob.glob(pathToImages+"/*")
+# Removing readme file
+try:
+	foldersTesting.remove(pathToImages+'/Readme.txt')
+except:
+	print 'Readme file not present'
+foldersTesting.sort()
+
 # Iterate through images in each fodlers to compile on list of traffic sign images
-for label,folder in enumerate(folders):
+for label,folderTraining in enumerate(foldersTraining):
 	if label not in trainingLabelShortened:
 		continue
+	folderTesting = foldersTesting[label]
 	print 'label is:',label
 	nImageCounter1 = 0
-	PositiveImages = glob.glob(folder+"/*.ppm")
-	print folder
+	PositiveImages = glob.glob(folderTraining+"/*.ppm") + glob.glob(folderTesting+"/*.ppm")
+	print 'Training and testing folders are'
+	print folderTraining
+	print folderTesting
+	print 'Total number of images in this label is:'
+	print len(PositiveImages)
 	for imagePath in PositiveImages:
 		nImageCounter += 1
 		nImageCounter1 += 1
@@ -99,16 +113,25 @@ trainingLabelsArr = trainingLabelsArr.reshape(-1,1)
 data_frame = np.hstack((trainingFeaturesArr,trainingLabelsArr))
 np.random.shuffle(data_frame)
 
-x_train = data_frame[:,:-1]
-y_train = data_frame[:,-1:].ravel()
+#Spilting into training and testing data
+percentage = 80
+partitionIndex = int(trainingLabelsArr.shape[0]*percentage/100)
+print partitionIndex
+
+x_train, x_test = data_frame[:partitionIndex,:-1],  data_frame[partitionIndex:,:-1]
+y_train, y_test = data_frame[:partitionIndex,-1:].ravel() , data_frame[partitionIndex:,-1:].ravel()
 
 print x_train.shape
 print y_train.shape
 print y_train
 model.fit(x_train,y_train)
 
+y_pred = model.predict(x_test)
+
+# y_pred = model.predict(x_test)
+print("Accuracy: "+str(accuracy_score(y_test, y_pred)))
+print('\n')
+print(classification_report(y_test, y_pred))
+
 filename = 'model1.sav'
 pickle.dump(model, open(filename, 'wb'))
-
-# print 'Number of training images'
-# print nImageCounter

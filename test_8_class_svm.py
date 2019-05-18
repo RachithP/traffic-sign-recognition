@@ -17,12 +17,14 @@ import numpy as np
 import cv2
 from sklearn import svm
 import pickle
+import random
 from sklearn.metrics import classification_report,accuracy_score
 
 def showImage(image):
 	cv2.namedWindow("Display frame",cv2.WINDOW_NORMAL)
 	cv2.imshow("Display frame",image)
-	cv2.waitKey(0)
+	k = cv2.waitKey(0)
+	return k
 
 winSize = (64,64)
 blockSize = (16,16)
@@ -62,6 +64,8 @@ testingFeaturesArr = []
 testingLabelsArr= []
 trainingLabelShortened = [45, 21, 38, 35, 17, 1, 14, 19]
 
+allImages= []
+
 nImageCounter = 0
 # Iterate through images in each fodlers to compile on list of traffic sign images
 for label,folder in enumerate(folders):
@@ -80,13 +84,13 @@ for label,folder in enumerate(folders):
 
 		# resize
 		trainImage = cv2.resize(trainImage, (TRAINING_IMAGE_SIZE_X, TRAINING_IMAGE_SIZE_Y), interpolation=cv2.INTER_AREA)
-		# showImage(trainImage)
 
 		# We have to tune these
 
 		# fd = hog.compute(trainImage,winStride,padding,locations)
 		fd = hog.compute(trainImage)
 		fd = fd.T
+		allImages.append(trainImage)
 		if nImageCounter==1:
 			testingFeaturesArr = fd
 			testingLabelsArr = np.array(1)
@@ -94,33 +98,14 @@ for label,folder in enumerate(folders):
 			testingFeaturesArr = np.vstack((testingFeaturesArr,fd))
 			testingLabelsArr = np.append(testingLabelsArr,label)
 
-#Initializing svm classifier
-testingLabelsArr = testingLabelsArr.reshape(-1,1)
-data_frame = np.hstack((testingFeaturesArr,testingLabelsArr))
-np.random.shuffle(data_frame)
-
-x_test = data_frame[:,:-1]
-y_test = data_frame[:,-1:].ravel()
-
-
-print x_test.shape
-print y_test.shape
-print 'predicting.......'
-y_pred = loaded_model.predict(x_test)
-
-# y_pred = model.predict(x_test)
-print("Accuracy: "+str(accuracy_score(y_test, y_pred)))
-print('\n')
-print(classification_report(y_test, y_pred))
-
-# print("Accuracy: "+str(accuracy_score(y_test, y_pred)))
-# print('\n')
-# print(classification_report(y_test, y_pred))
-
-# # save the model to disk
-# filename = 'model1.sav'
-# pickle.dump(model, open(filename, 'wb'))
-
-
-# print 'Number of training images'
-# print nImageCounter
+key = 13
+while key==13:
+	index = random.randint(0, testingFeaturesArr.shape[0]-1)
+	print 'index is',index
+	feature = testingFeaturesArr[index,:]
+	print feature.shape
+	feature = feature.reshape(1,-1)
+	print feature.shape
+	y_pred = loaded_model.predict(feature)
+	print 'Class is :',y_pred
+	key = showImage(allImages[index])
