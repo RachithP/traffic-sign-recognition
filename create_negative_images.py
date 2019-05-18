@@ -22,8 +22,8 @@ import random
 import cv2
 
 def showImage(image):
-	cv2.namedWindow("Display frame",cv2.WINDOW_NORMAL)
-	cv2.imshow("Display frame",image)
+	cv2.namedWindow("Display frame", cv2.WINDOW_NORMAL)
+	cv2.imshow("Display frame", image)
 	keyPress = cv2.waitKey(0)
 
 	return keyPress
@@ -31,7 +31,7 @@ def showImage(image):
 TRAINING_IMAGE_SIZE_X = 80
 TRAINING_IMAGE_SIZE_Y = 80
 
-# Iterate through each image, convert to BGR, undistort(function takes all channels in input)
+# Iterate through each image
 pathToImages = 'input'
 files = glob.glob(pathToImages+"/*.jpg")
 
