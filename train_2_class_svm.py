@@ -46,7 +46,7 @@ nImagesCutoff = 2200
 # Iterate through each image, convert to BGR, undistort(function takes all channels in input)
 pathToImages = 'Training'
 trainingFolders = glob.glob(pathToImages+"/*")
-
+trainingFolders.sort()
 # Removing readme file
 try:
 	trainingFolders.remove(pathToImages+'/Readme.txt')
@@ -55,20 +55,23 @@ except:
 
 pathToImages = 'Training'
 testingFolders = glob.glob(pathToImages+"/*")
-
+testingFolders.sort()
 # Removing readme file
 try:
 	testingFolders.remove(pathToImages+'/Readme.txt')
 except:
 	print 'Readme file not present'
-folders = trainingFolders+testingFolders
 trainingFeaturesArr = []
 trainingLabelsArr= []
+trainingLabelShortened = [45, 21, 38, 35, 17, 1, 14, 19]
 
 nImageCounter = 0
 # Iterate through images in each fodlers to compile on list of traffic sign images
-for folder in folders:
-	PositiveImages = glob.glob(folder+"/*.ppm")
+for label,folder in enumerate(trainingFolders):
+	# if label not in trainingLabelShortened:
+	# 	continue
+	folderTesting = testingFolders[label]
+	PositiveImages = glob.glob(folder+"/*.ppm") + glob.glob(folderTesting+"/*.ppm")
 	for imagePath in PositiveImages:
 		print nImageCounter
 		nImageCounter += 1

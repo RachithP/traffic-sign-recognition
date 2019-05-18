@@ -27,30 +27,7 @@ Pass 3 for classification between whether the image is a sign or not, Output: la
 
 '''
 
-def classifier(image,classifierNumber):
-	# load the model from disk
-	if classifierNumber==1:
-		filename = 'eight_class_svm.sav'
-	elif classifierNumber==2:
-		filename = 'correct_sign_2_class_svm.sav'
-	elif classifierNumber==3:
-		filename = 'two_class_svm.sav'
-	loaded_model = pickle.load(open(filename, 'rb'))
-	
-	winSize = (64,64)
-	blockSize = (16,16)
-	blockStride = (8,8)
-	cellSize = (8,8)
-	nbins = 16
-	derivAperture = 1
-	winSigma = -1.
-	histogramNormType = 0
-	L2HysThreshold = 2.0000000000000001e-01
-	gammaCorrection = 2
-	nlevels = 64
-	SignedGradients = True
-	hog = cv2.HOGDescriptor(winSize,blockSize,blockStride,cellSize,nbins,derivAperture,winSigma,histogramNormType,L2HysThreshold,gammaCorrection,nlevels,SignedGradients)
-
+def classifier(image,hog,model):
 	TRAINING_IMAGE_SIZE_X = 64
 	TRAINING_IMAGE_SIZE_Y = 64
 
@@ -65,7 +42,7 @@ def classifier(image,classifierNumber):
 	# fd = hog.compute(trainImage,winStride,padding,locations)
 	fd = hog.compute(trainImage)
 	fd = fd.T
-	y_pred = loaded_model.predict(fd)
+	y_pred = model.predict(fd)
 	# print 'Class is :',y_pred
 
 	return y_pred[0]
