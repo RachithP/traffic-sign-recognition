@@ -94,22 +94,25 @@ def classifier_init():
 	two_class_model = pickle.load(open(filename, 'rb'))
 	filename = 'nine_class_svm.sav'
 	nine_class_model = pickle.load(open(filename, 'rb'))
+	filename = 'sixtyone_class_svm.sav'
+	sixtyone_class_model = pickle.load(open(filename, 'rb'))
+	
 
-	return hog,two_class_model,correct_sign_model,eight_class_model,nine_class_model
+	return hog,two_class_model,correct_sign_model,eight_class_model,nine_class_model,sixtyone_class_model
 
 def scaleWindows(image,(x, y,w,h),scale,iterations):
 	center_x = x+w/2
 	center_y = y+h/2
 	newScale = scale
 	for k in range(1,iterations+1):
-		print newScale
+		# print newScale
 		scaledW = w*newScale
 		scaledH = h*newScale
 		scaledX = center_x-scaledW/2
 		scaledY = center_y-scaledH/2
-		print '-----'
-		print w,h
-		print int(scaledY),int(scaledY+scaledH),int(scaledX),int(scaledX+scaledW)
+		# print '-----'
+		# print w,h
+		# print int(scaledY),int(scaledY+scaledH),int(scaledX),int(scaledX+scaledW)
 		if 0<int(scaledY)<image.shape[0] and 0<int(scaledY+scaledH)<image.shape[0] and 0<int(scaledX)<image.shape[1] and 0<int(scaledX+scaledW)<image.shape[1]:
 			print 'yielding'
 			yield image[int(scaledY):int(scaledY+scaledH),int(scaledX):int(scaledX+scaledW)]
@@ -122,9 +125,48 @@ def scaleWindows(image,(x, y,w,h),scale,iterations):
 	# 	scaledY = center_y-scaledH/2
 	# 	yield image[int(center_y):int(center_y+scaledH),int(scaledX):int(scaledX+scaledW)]
 
-def main():
+def findIndex(pred):
+	if pred==45:
+		return 0
+	if pred==21:
+		return 1
+	if pred==38:
+		return 2
+	if pred==35:
+		return 3
+	if pred==17:
+		return 4
+	if pred==1:
+		return 5
+	if pred==14:
+		return 6
+	if pred==19:
+		return 7
 
-	hog,two_class_model,correct_sign_model,eight_class_model,nine_class_model = classifier_init()
+def main():
+	addImages = []
+	temp = cv2.imread('class_images/45.ppm')
+	addImages.append(temp)
+	temp = cv2.imread('class_images/21.ppm')
+	addImages.append(temp)
+	temp = cv2.imread('class_images/38.ppm')
+	addImages.append(temp)
+	temp = cv2.imread('class_images/35.ppm')
+	addImages.append(temp)
+	temp = cv2.imread('class_images/17.ppm')
+	addImages.append(temp)
+	temp = cv2.imread('class_images/1.ppm')
+	addImages.append(temp)
+	temp = cv2.imread('class_images/14.ppm')
+	addImages.append(temp)
+	temp = cv2.imread('class_images/19.ppm')
+	addImages.append(temp)
+
+	fullLabelPosList = []
+	goodIndices = []
+	trainingLabelShortened = [45, 21, 38, 35, 17, 1, 14, 19]
+
+	hog,two_class_model,correct_sign_model,eight_class_model,nine_class_model,sixtyone_class_model = classifier_init()
 
 	blue_lower = np.array([80, 90, 0], np.uint8)
 	blue_upper = np.array([200, 200, 255], np.uint8)
@@ -140,7 +182,12 @@ def main():
 	files_hsv = glob.glob(path_to_images_hsv + "/*.jpg")
 	files_hsv.sort()
 
-	for index in range(0,len(files)):
+	startIndex = 0
+
+	for index in range(startIndex,len(files)):
+		imageLabelPosList = [None,None,None,None,None,None,None,None]
+
+		print index
 
 		image_denoise = cv2.imread(path_to_images + "/frame" + str(index) + ".jpg", -1)  # read image
 
@@ -155,10 +202,8 @@ def main():
 
 		# showImage(np.hstack((red_hsv_one, red_hsv_two, red_hsv)))
 		# continue
-		try:
-			b_, g_, r_ = cv2.split(image_denoise)  # split into channels
-		except:
-			continue
+		b_, g_, r_ = cv2.split(image_denoise)  # split into channels
+
 		b = contractStretching(b_).astype(float)  # adaptive histogram equivalent on each channel
 		g = contractStretching(g_).astype(float)
 		r = contractStretching(r_).astype(float)
@@ -209,35 +254,98 @@ def main():
 				x, y, w, h = cv2.boundingRect(cnt)
 				if 0.4 < float(h) / w < 2.5:
 					croppedWindow = final_image[y:y+h,x:x+w]
-					prediction = classifier(croppedWindow,hog,nine_class_model)
-					# if prediction!=62:
-					cv2.rectangle(final_image, (x, y), (x + w, y + h), (200, 0, 200), 2)
-					cv2.putText(final_image,str(prediction), (x, y),cv2.FONT_HERSHEY_SIMPLEX,1,(255,255,255),2)
-
+					prediction = classifier(croppedWindow,hog,sixtyone_class_model)
+					if prediction!=62 and prediction in trainingLabelShortened:
+						# cv2.rectangle(final_image, (x, y), (x + w, y + h), (200, 0, 200), 2)
+						# cv2.putText(final_image,str(prediction), (x, y),cv2.FONT_HERSHEY_SIMPLEX,1,(255,255,255),2)
+						labelIndex = findIndex(prediction)
+						imageLabelPosList[labelIndex] = [x,y,w,h,prediction]
 		_, blue_contours, _ = cv2.findContours(blue_image, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
 		for cnt in blue_contours:
 			x, y, w, h = cv2.boundingRect(cnt)
 			cv2.rectangle(image_denoise, (x, y), (x + w, y + h), (255, 0, 0), 2)
-			if 250.0 < cv2.contourArea(cnt) < 6000.0:
-				x, y, w, h = cv2.boundingRect(cnt)
+			if 500.0 < float(w)*h < 5000.0:
 				cv2.rectangle(image_denoise, (x, y), (x + w, y + h), (255, 255, 0), 2)
-				x, y, w, h = cv2.boundingRect(cnt)
-				if 0.3 < float(h) / w < 3.0:
-					scaledWindows = scaleWindows(final_image,(x, y,w,h),1.1,5)
+				if 0.3 < float(h) / w < 3.3:
+					# cv2.rectangle(final_image, (x, y), (x + w, y + h), (255, 100, 100), 2)
+					scaledWindows = scaleWindows(final_image,(x, y,w,h),1.1,3)
 					croppedWindow = final_image[y:y+h,x:x+w]
-					prediction = classifier(croppedWindow,hog,nine_class_model)
-					# if prediction!=62:
-					cv2.rectangle(final_image, (x, y), (x + w, y + h), (255, 100, 100), 2)
-					cv2.putText(final_image,str(prediction), (x, y),cv2.FONT_HERSHEY_SIMPLEX,1,(255,255,255),2)
+					prediction = classifier(croppedWindow,hog,sixtyone_class_model)
+					if prediction!=62 and prediction in trainingLabelShortened:
+						# cv2.rectangle(final_image, (x, y), (x + w, y + h), (255, 100, 100), 2)
+						# cv2.putText(final_image,str(prediction), (x, y),cv2.FONT_HERSHEY_SIMPLEX,1,(255,255,255),2)
+						labelIndex = findIndex(prediction)
+						imageLabelPosList[labelIndex] = [x,y,w,h,prediction]
 					for scaleWindow in scaledWindows:
-						prediction = classifier(scaleWindow,hog,nine_class_model)
-						# if prediction!=62:
-						cv2.rectangle(final_image, (x, y), (x + w, y + h), (255, 100, 100), 2)
-						cv2.putText(final_image,str(prediction), (x, y),cv2.FONT_HERSHEY_SIMPLEX,1,(255,255,255),2)
+						prediction = classifier(scaleWindow,hog,sixtyone_class_model)
+						if prediction!=62 and prediction in trainingLabelShortened:
+							# cv2.rectangle(final_image, (x, y), (x + w, y + h), (255, 100, 100), 2)
+							# cv2.putText(final_image,str(prediction), (x, y),cv2.FONT_HERSHEY_SIMPLEX,1,(255,255,255),2)
+							labelIndex = findIndex(prediction)
+							imageLabelPosList[labelIndex] = [x,y,w,h,prediction]
+		fullLabelPosList.append(imageLabelPosList)
 
+		if index>=startIndex+3:
+			Newindex = index-startIndex 
+			image1 = cv2.imread(path_to_images + "/frame" + str(index-3) + ".jpg", -1)
+			image2 = cv2.imread(path_to_images + "/frame" + str(index-2) + ".jpg", -1)
+			image3 = cv2.imread(path_to_images + "/frame" + str(index-1) + ".jpg", -1)
+			image4 = cv2.imread(path_to_images + "/frame" + str(index) + ".jpg", -1)
+			list1 = fullLabelPosList[Newindex-3]
+			list2 = fullLabelPosList[Newindex-2]
+			list3 = fullLabelPosList[Newindex-1]
+			list4 = fullLabelPosList[Newindex]
+			print '--------'
+			flag = 0
+			for k in range(8):
+				if list1[k] is not None and list2[k] is not None and list3[k] is not None and list4[k] is not None:
+					addImage = addImages[k]
+					print 'found!!'
+					print list1
+					print list2
+					print list3
+					print trainingLabelShortened[k]
+					flag = 1
+					print image1[list1[k][1]:list1[k][1]+addImage.shape[0],list1[k][0]-addImage.shape[1]:list1[k][0]].shape
+					print addImage.shape
+					temp = cv2.resize(addImage, (list1[k][2], list1[k][3]))
+					print temp.shape
+					print image1[list1[k][1]:list1[k][1]+list1[k][3],list1[k][0]-list1[k][2]:list1[k][0]].shape
+					image1[list1[k][1]:list1[k][1]+list1[k][3],list1[k][0]-list1[k][2]:list1[k][0]] = temp
 
-		cv2.imwrite("outputs/testing/frame"+str(index)+".jpg", image_denoise)
-		cv2.imwrite("outputs/testing/final/frame"+str(index)+".jpg", final_image)
+					temp = cv2.resize(addImage, (list2[k][2], list2[k][3]))
+					image2[list2[k][1]:list2[k][1]+list2[k][3],list2[k][0]-list2[k][2]:list2[k][0]] = temp
+
+					temp = cv2.resize(addImage, (list3[k][2], list3[k][3]))
+					image3[list3[k][1]:list3[k][1]+list3[k][3],list3[k][0]-list3[k][2]:list3[k][0]] = temp
+
+					temp = cv2.resize(addImage, (list4[k][2], list4[k][3]))
+					image4[list4[k][1]:list4[k][1]+list4[k][3],list4[k][0]-list4[k][2]:list4[k][0]] = temp
+					cv2.rectangle(image1, (list1[k][0], list1[k][1]), (list1[k][0] + list1[k][2], list1[k][1] + list1[k][3]), (255, 100, 100), 2)
+					cv2.rectangle(image2, (list2[k][0], list2[k][1]), (list2[k][0] + list2[k][2], list2[k][1] + list2[k][3]), (255, 100, 100), 2)
+					cv2.rectangle(image3, (list3[k][0], list3[k][1]), (list3[k][0] + list3[k][2], list3[k][1] + list3[k][3]), (255, 100, 100), 2)
+					cv2.rectangle(image4, (list4[k][0], list4[k][1]), (list4[k][0] + list4[k][2], list4[k][1] + list4[k][3]), (255, 100, 100), 2)
+					cv2.putText(image1,str(list1[k][4]), (list1[k][0], list1[k][1]),cv2.FONT_HERSHEY_SIMPLEX,1,(255,255,255),2)
+					cv2.putText(image2,str(list2[k][4]), (list2[k][0], list2[k][1]),cv2.FONT_HERSHEY_SIMPLEX,1,(255,255,255),2)
+					cv2.putText(image3,str(list3[k][4]), (list3[k][0], list3[k][1]),cv2.FONT_HERSHEY_SIMPLEX,1,(255,255,255),2)
+					cv2.putText(image4,str(list4[k][4]), (list4[k][0], list4[k][1]),cv2.FONT_HERSHEY_SIMPLEX,1,(255,255,255),2)
+			if Newindex-3 not in goodIndices:
+				cv2.imwrite("outputs/testing/final/frame"+str(Newindex-3)+".jpg", image1)
+
+			if Newindex-2 not in goodIndices:
+				cv2.imwrite("outputs/testing/final/frame"+str(Newindex-2)+".jpg", image2)
+
+			if Newindex-1 not in goodIndices:
+				cv2.imwrite("outputs/testing/final/frame"+str(Newindex-1)+".jpg", image3)
+
+			if Newindex not in goodIndices:
+				cv2.imwrite("outputs/testing/final/frame"+str(Newindex)+".jpg", image4)
+
+			if flag==1:
+				goodIndices.append(Newindex-3)
+				goodIndices.append(Newindex-2)
+				goodIndices.append(Newindex-1)
+				goodIndices.append(Newindex)
 		# showImage(np.hstack((image_denoise, final_image)))
 		continue
 
