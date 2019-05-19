@@ -72,7 +72,7 @@ def imadjust(src, tol=1, vin=[0, 255], vout=(0, 255)):
 
 def main():
 
-	blue_lower = np.array([80, 90, 0], np.uint8)
+	blue_lower = np.array([90, 90, 0], np.uint8)
 	blue_upper = np.array([200, 200, 255], np.uint8)
 	red_lower_one = np.array([0, 100, 0], np.uint8)
 	red_upper_one = np.array([20, 255, 255], np.uint8)
@@ -88,8 +88,8 @@ def main():
 
 	for index in range(len(files)):
 
-		# if index <= 700:
-		# 	continue
+		if index <= 2000:
+			continue
 
 		image_denoise = cv2.imread(path_to_images+"/frame"+str(index)+".jpg", -1)  # read image
 
@@ -135,8 +135,8 @@ def main():
 		red_image = contractStretching(red_image)
 
 #----------------------threshold the contrast image-----------------------------------
-		blue_thresh = cv2.threshold(blue_image, 150, 255, cv2.THRESH_BINARY)[1]
-		red_thresh = cv2.threshold(red_image, 150, 255, cv2.THRESH_BINARY)[1]
+		blue_thresh = cv2.threshold(blue_image, 180, 255, cv2.THRESH_BINARY)[1]
+		red_thresh = cv2.threshold(red_image, 140, 255, cv2.THRESH_BINARY)[1]
 
 		# -------------------------------------------------------
 		blue_image = np.maximum(blue_hsv, blue_thresh)
@@ -148,24 +148,26 @@ def main():
 		final_image = image_denoise.copy()
 
 		_, red_contours, _ = cv2.findContours(red_image, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-		# for cnt in red_contours:
-		# 	x, y, w, h = cv2.boundingRect(cnt)
-		# 	cv2.rectangle(image_denoise, (x, y), (x + w, y + h), (0, 0, 255), 2)
-		# 	if 150.0 < cv2.contourArea(cnt) < 4000.0:
-		# 		x, y, w, h = cv2.boundingRect(cnt)
-		# 		cv2.rectangle(image_denoise, (x, y), (x + w, y + h), (0, 255, 255), 2)
-		# 		x, y, w, h = cv2.boundingRect(cnt)
-		# 		if 0.4 < float(h) / w < 2.5:
-		# 			cv2.rectangle(final_image, (x, y), (x + w, y + h), (200, 0, 200), 2)
+		for cnt in red_contours:
+			x, y, w, h = cv2.boundingRect(cnt)
+			cv2.rectangle(image_denoise, (x, y), (x + w, y + h), (0, 0, 255), 2)
+			if 400.0 < float(w)*h < 5000.0:
+				cv2.rectangle(image_denoise, (x, y), (x + w, y + h), (0, 255, 255), 2)
+				if 0.4 < float(h) / w < 2.5:
+					cv2.rectangle(final_image, (x, y), (x + w, y + h), (200, 0, 200), 2)
 
+		count = 0
 		_, blue_contours, _ = cv2.findContours(blue_image, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
 		for cnt in blue_contours:
 			x, y, w, h = cv2.boundingRect(cnt)
 			cv2.rectangle(image_denoise, (x, y), (x + w, y + h), (255, 0, 0), 2)
-			if 100.0 < float(w)*h < 5000.0:
+			if 500.0 < float(w)*h < 5000.0:
 				cv2.rectangle(image_denoise, (x, y), (x + w, y + h), (255, 255, 0), 2)
 				if 0.3 < float(h) / w < 3.3:
 					cv2.rectangle(final_image, (x, y), (x + w, y + h), (255, 100, 100), 2)
+					count += 1
+			if count == 5:
+				break
 
 		# cv2.imwrite("outputs/testing/frame"+str(index)+".jpg", image_denoise)
 		# cv2.imwrite("outputs/testing/final/frame"+str(index)+".jpg", final_image)

@@ -168,7 +168,7 @@ def main():
 
 	hog,two_class_model,correct_sign_model,eight_class_model,nine_class_model,sixtyone_class_model = classifier_init()
 
-	blue_lower = np.array([80, 90, 0], np.uint8)
+	blue_lower = np.array([90, 90, 0], np.uint8)
 	blue_upper = np.array([200, 200, 255], np.uint8)
 	red_lower_one = np.array([0, 100, 0], np.uint8)
 	red_upper_one = np.array([20, 255, 255], np.uint8)
@@ -232,8 +232,8 @@ def main():
 		red_image = contractStretching(red_image)
 
 # ----------------------threshold the contrast image-----------------------------------
-		blue_thresh = cv2.threshold(blue_image, 150, 255, cv2.THRESH_BINARY)[1]
-		red_thresh = cv2.threshold(red_image, 150, 255, cv2.THRESH_BINARY)[1]
+		blue_thresh = cv2.threshold(blue_image, 180, 255, cv2.THRESH_BINARY)[1]
+		red_thresh = cv2.threshold(red_image, 140, 255, cv2.THRESH_BINARY)[1]
 
 		# -------------------------------------------------------
 		blue_image = np.maximum(blue_hsv, blue_thresh)
@@ -248,7 +248,7 @@ def main():
 		for cnt in red_contours:
 			x, y, w, h = cv2.boundingRect(cnt)
 			cv2.rectangle(image_denoise, (x, y), (x + w, y + h), (0, 0, 255), 2)
-			if 400.0 < cv2.contourArea(cnt) < 3000.0:
+			if 400.0 < cv2.contourArea(cnt) < 5000.0:
 				x, y, w, h = cv2.boundingRect(cnt)
 				cv2.rectangle(image_denoise, (x, y), (x + w, y + h), (0, 255, 255), 2)
 				x, y, w, h = cv2.boundingRect(cnt)
