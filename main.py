@@ -182,7 +182,7 @@ def main():
 	files_hsv = glob.glob(path_to_images_hsv + "/*.jpg")
 	files_hsv.sort()
 
-	startIndex = 0
+	startIndex = 2740
 
 	for index in range(startIndex,len(files)):
 		imageLabelPosList = [None,None,None,None,None,None,None,None]
@@ -268,7 +268,7 @@ def main():
 				cv2.rectangle(image_denoise, (x, y), (x + w, y + h), (255, 255, 0), 2)
 				if 0.3 < float(h) / w < 3.3:
 					# cv2.rectangle(final_image, (x, y), (x + w, y + h), (255, 100, 100), 2)
-					scaledWindows = scaleWindows(final_image,(x, y,w,h),1.1,3)
+					# scaledWindows = scaleWindows(final_image,(x, y,w,h),1.1,3)
 					croppedWindow = final_image[y:y+h,x:x+w]
 					prediction = classifier(croppedWindow,hog,sixtyone_class_model)
 					if prediction!=62 and prediction in trainingLabelShortened:
@@ -276,13 +276,13 @@ def main():
 						# cv2.putText(final_image,str(prediction), (x, y),cv2.FONT_HERSHEY_SIMPLEX,1,(255,255,255),2)
 						labelIndex = findIndex(prediction)
 						imageLabelPosList[labelIndex] = [x,y,w,h,prediction]
-					for scaleWindow in scaledWindows:
-						prediction = classifier(scaleWindow,hog,sixtyone_class_model)
-						if prediction!=62 and prediction in trainingLabelShortened:
-							# cv2.rectangle(final_image, (x, y), (x + w, y + h), (255, 100, 100), 2)
-							# cv2.putText(final_image,str(prediction), (x, y),cv2.FONT_HERSHEY_SIMPLEX,1,(255,255,255),2)
-							labelIndex = findIndex(prediction)
-							imageLabelPosList[labelIndex] = [x,y,w,h,prediction]
+					# for scaleWindow in scaledWindows:
+					# 	prediction = classifier(scaleWindow,hog,sixtyone_class_model)
+					# 	if prediction!=62 and prediction in trainingLabelShortened:
+					# 		# cv2.rectangle(final_image, (x, y), (x + w, y + h), (255, 100, 100), 2)
+					# 		# cv2.putText(final_image,str(prediction), (x, y),cv2.FONT_HERSHEY_SIMPLEX,1,(255,255,255),2)
+					# 		labelIndex = findIndex(prediction)
+					# 		imageLabelPosList[labelIndex] = [x,y,w,h,prediction]
 		fullLabelPosList.append(imageLabelPosList)
 
 		if index>=startIndex+3:
@@ -335,16 +335,16 @@ def main():
 					cv2.putText(image3,str(list3[k][4]), (list3[k][0], list3[k][1]),cv2.FONT_HERSHEY_SIMPLEX,1,(255,255,255),2)
 					cv2.putText(image4,str(list4[k][4]), (list4[k][0], list4[k][1]),cv2.FONT_HERSHEY_SIMPLEX,1,(255,255,255),2)
 			if Newindex-3 not in goodIndices:
-				cv2.imwrite("outputs/testing/final/frame"+str(Newindex-3)+".jpg", image1)
+				cv2.imwrite("outputs/testing/final/frame"+str(index-3)+".jpg", image1)
 
 			if Newindex-2 not in goodIndices:
-				cv2.imwrite("outputs/testing/final/frame"+str(Newindex-2)+".jpg", image2)
+				cv2.imwrite("outputs/testing/final/frame"+str(index-2)+".jpg", image2)
 
 			if Newindex-1 not in goodIndices:
-				cv2.imwrite("outputs/testing/final/frame"+str(Newindex-1)+".jpg", image3)
+				cv2.imwrite("outputs/testing/final/frame"+str(index-1)+".jpg", image3)
 
 			if Newindex not in goodIndices:
-				cv2.imwrite("outputs/testing/final/frame"+str(Newindex)+".jpg", image4)
+				cv2.imwrite("outputs/testing/final/frame"+str(index)+".jpg", image4)
 
 			if flag==1:
 				goodIndices.append(Newindex-3)
