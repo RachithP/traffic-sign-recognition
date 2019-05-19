@@ -310,17 +310,22 @@ def main():
 					print addImage.shape
 					temp = cv2.resize(addImage, (list1[k][2], list1[k][3]))
 					print temp.shape
-					print image1[list1[k][1]:list1[k][1]+list1[k][3],list1[k][0]-list1[k][2]:list1[k][0]].shape
-					image1[list1[k][1]:list1[k][1]+list1[k][3],list1[k][0]-list1[k][2]:list1[k][0]] = temp
+					print list1[k][0]
+					print list1[k][1]
+					print list1[k][2]
+					print list1[k][3]
+					print image1[list1[k][1]+list1[k][3]:list1[k][1]+list1[k][3]+list1[k][3],list1[k][0]:list1[k][0]+list1[k][2]].shape
+					image1[list1[k][1]+list1[k][3]:list1[k][1]+list1[k][3]+list1[k][3],list1[k][0]:list1[k][0]+list1[k][2]] = temp
 
 					temp = cv2.resize(addImage, (list2[k][2], list2[k][3]))
-					image2[list2[k][1]:list2[k][1]+list2[k][3],list2[k][0]-list2[k][2]:list2[k][0]] = temp
+					image2[list2[k][1]+list2[k][3]:list2[k][1]+list2[k][3]+list2[k][3],list2[k][0]:list2[k][0]+list2[k][2]] = temp
 
 					temp = cv2.resize(addImage, (list3[k][2], list3[k][3]))
-					image3[list3[k][1]:list3[k][1]+list3[k][3],list3[k][0]-list3[k][2]:list3[k][0]] = temp
+					image3[list3[k][1]+list3[k][3]:list3[k][1]+list3[k][3]+list3[k][3],list3[k][0]:list3[k][0]+list3[k][2]] = temp
 
 					temp = cv2.resize(addImage, (list4[k][2], list4[k][3]))
-					image4[list4[k][1]:list4[k][1]+list4[k][3],list4[k][0]-list4[k][2]:list4[k][0]] = temp
+					image4[list4[k][1]+list4[k][3]:list4[k][1]+list4[k][3]+list4[k][3],list4[k][0]:list4[k][0]+list4[k][2]] = temp
+
 					cv2.rectangle(image1, (list1[k][0], list1[k][1]), (list1[k][0] + list1[k][2], list1[k][1] + list1[k][3]), (255, 100, 100), 2)
 					cv2.rectangle(image2, (list2[k][0], list2[k][1]), (list2[k][0] + list2[k][2], list2[k][1] + list2[k][3]), (255, 100, 100), 2)
 					cv2.rectangle(image3, (list3[k][0], list3[k][1]), (list3[k][0] + list3[k][2], list3[k][1] + list3[k][3]), (255, 100, 100), 2)
