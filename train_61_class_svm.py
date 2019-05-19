@@ -144,7 +144,7 @@ print 'Number of negative_images', nImageCounter
 
 #Initializing svm classifier
 # model = svm.SVC(C=1.0, kernel='rbf', degree=3, gamma='auto_deprecated', coef0=0.0, shrinking=True, probability=False, tol=0.001, cache_size=200, class_weight='balanced')
-model = svm.SVC(gamma=0.01,class_weight='balanced')
+model = svm.SVC(gamma=0.01,class_weight='balanced', C=0.1)
 trainingLabelsArr = trainingLabelsArr.reshape(-1,1)
 data_frame = np.hstack((trainingFeaturesArr,trainingLabelsArr))
 
