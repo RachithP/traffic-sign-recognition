@@ -24,7 +24,6 @@ def showImage(image):
 	cv2.imshow("Display frame", image)
 	cv2.waitKey(100)
 
-
 # def denoiseMultiColor():
 #
 # 	cv2.fastNlMeansDenoisingColoredMulti()

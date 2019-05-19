@@ -78,7 +78,6 @@ for label,folder in enumerate(trainingFolders):
 
 		# load training image
 		image = cv2.imread(imagePath)
-
 		# convert to grayscale
 		trainImage = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 

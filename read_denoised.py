@@ -21,7 +21,7 @@ from scipy.stats import multivariate_normal
 def showImage(image):
 	cv2.namedWindow("Display frame", cv2.WINDOW_NORMAL)
 	cv2.imshow("Display frame", image)
-	cv2.waitKey(100)
+	cv2.waitKey(0)
 
 
 # def denoiseMultiColor():
@@ -88,7 +88,7 @@ def main():
 
 	for index in range(len(files)):
 
-		if index <= 2000:
+		if index <= 20:
 			continue
 
 		image_denoise = cv2.imread(path_to_images+"/frame"+str(index)+".jpg", -1)  # read image
@@ -102,7 +102,7 @@ def main():
 
 		red_hsv = np.maximum(red_hsv_one, red_hsv_two)
 
-		# showImage(np.hstack((red_hsv_one, red_hsv_two, red_hsv)))
+		# showImage(np.hstack((image_denoise, cv2.bitwise_and(image_denoise, image_denoise, mask=blue_hsv))))
 		# continue
 
 		b_, g_, r_ = cv2.split(image_denoise)  # split into channels
@@ -118,7 +118,7 @@ def main():
 		# showImage(np.hstack((b.astype(np.uint8), g.astype(np.uint8), r.astype(np.uint8))))
 		# continue
 
-#--------------Applying the ref paper's criteria for thresholding-------------------------
+		#--------------Applying the ref paper's criteria for thresholding-------------------------
 		den = r + g + b  # calculate the denominator
 
 		red_image = np.maximum(0.0, np.minimum(r - b, r - g) / den)
@@ -134,13 +134,15 @@ def main():
 		blue_image = contractStretching(blue_image)
 		red_image = contractStretching(red_image)
 
-#----------------------threshold the contrast image-----------------------------------
+		#----------------------threshold the contrast image-----------------------------------
 		blue_thresh = cv2.threshold(blue_image, 180, 255, cv2.THRESH_BINARY)[1]
 		red_thresh = cv2.threshold(red_image, 140, 255, cv2.THRESH_BINARY)[1]
 
 		# -------------------------------------------------------
 		blue_image = np.maximum(blue_hsv, blue_thresh)
 		red_image = np.maximum(red_hsv, red_thresh)
+		# showImage(np.hstack((image_denoise, cv2.bitwise_and(image_denoise, image_denoise, mask=red_image))))
+		# continue
 
 		# showImage(np.hstack((blue_image, red_image)))
 		# continue
@@ -174,31 +176,31 @@ def main():
 		showImage(np.hstack((image_denoise, final_image)))
 		continue
 
-		# # -------------------------------------------------------
-		# # test_image = np.maximum(blue_hsv, blue_thresh)
-		# # test_image = np.maximum(red_thresh, test_image)
-		# # test_image = np.maximum(blue_image, red_image) # this is for MSER
-		# # showImage(test_image)
-		# # continue
-		# # showImage(np.hstack((cv2.threshold(red_image, 50, 255, cv2.THRESH_BINARY)[1], cv2.threshold(blue_image, 180, 255, cv2.THRESH_BINARY)[1])))
-		# # continue
+	# # -------------------------------------------------------
+	# # test_image = np.maximum(blue_hsv, blue_thresh)
+	# # test_image = np.maximum(red_thresh, test_image)
+	# # test_image = np.maximum(blue_image, red_image) # this is for MSER
+	# # showImage(test_image)
+	# # continue
+	# # showImage(np.hstack((cv2.threshold(red_image, 50, 255, cv2.THRESH_BINARY)[1], cv2.threshold(blue_image, 180, 255, cv2.THRESH_BINARY)[1])))
+	# # continue
 
-		# # test_image = cv2.threshold(test_image, 50, 200, cv2.THRESH_BINARY)[1]
+	# # test_image = cv2.threshold(test_image, 50, 200, cv2.THRESH_BINARY)[1]
 
-		# mser = cv2.MSER_create(_delta=4, _max_variation=0.3, _min_diversity=0.5, _max_area=4000, _min_area=200)
-		# # mser = cv2.MSER_create()
-		# # test_image = red_image+blue_image
-		# regions, _ = mser.detectRegions(test_image)
+	# mser = cv2.MSER_create(_delta=4, _max_variation=0.3, _min_diversity=0.5, _max_area=4000, _min_area=200)
+	# # mser = cv2.MSER_create()
+	# # test_image = red_image+blue_image
+	# regions, _ = mser.detectRegions(test_image)
 
-		# for p in regions:
-		# 	x, y, w, h = cv2.boundingRect(p.reshape(-1, 1, 2))
-		# 	if h / w >= 0.6 and h / w <= 1.3:
-		# 		cv2.rectangle(image, (x, y), (x + w, y + h), (0, 255, 0), 1)
+	# showImage(image)
+	# for p in regions:
+	# 	x, y, w, h = cv2.boundingRect(p.reshape(-1, 1, 2))
+	# 	if h / w >= 0.6 and h / w <= 1.3:
+	# 		cv2.rectangle(image, (x, y), (x + w, y + h), (0, 255, 0), 1)
 
-		# # hulls = [cv2.convexHull(p.reshape(-1, 1, 2)) for p in regions]
-		# # cv2.polylines(image, hulls, 1, (0, 255, 0))
+	# # hulls = [cv2.convexHull(p.reshape(-1, 1, 2)) for p in regions]
+	# # cv2.polylines(image, hulls, 1, (0, 255, 0))
 
-		# showImage(image)
 
 
 if __name__ == "__main__":
