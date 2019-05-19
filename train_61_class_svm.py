@@ -24,6 +24,9 @@ def showImage(image):
 	cv2.imshow("Display frame",image)
 	cv2.waitKey(0)
 
+def denoiseColor(img):
+	return cv2.fastNlMeansDenoisingColored(img, None, 10, 10, 7, 21)
+
 winSize = (64,64)
 blockSize = (16,16)
 blockStride = (8,8)
@@ -70,8 +73,6 @@ nImageCounter = 0
 # Iterate through images in each fodlers to compile on list of traffic sign images
 for label,folderTraining in enumerate(foldersTraining):
 	print nImageCounter
-	if label not in trainingLabelShortened:
-		continue
 	folderTesting = foldersTesting[label]
 	print 'label is:',label
 	nImageCounter1 = 0
@@ -87,6 +88,8 @@ for label,folderTraining in enumerate(foldersTraining):
 
 		# load training image
 		image = cv2.imread(imagePath)
+
+		image = denoiseColor(image)
 
 		# convert to grayscale
 		trainImage = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
@@ -111,14 +114,15 @@ nPositiveImageCounter = nImageCounter
 nImageCounter = 0
 NegativeImages1 = glob.glob("negative_images_1/*.jpg")
 NegativeImages2 = glob.glob("negative_images_2/*.jpg")
-NegativeImages = NegativeImages1+NegativeImages2
+NegativeImages3 = glob.glob("negative_images/*.jpg")
+NegativeImages = NegativeImages1+NegativeImages2+NegativeImages3
 for imagePath in NegativeImages:
 	print nImageCounter
 	nImageCounter += 1
 
 	# load training image
 	image = cv2.imread(imagePath)
-
+	image = denoiseColor(image)
 	# convert to grayscale
 	trainImage = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
@@ -132,8 +136,8 @@ for imagePath in NegativeImages:
 	fd = fd.T
 	trainingFeaturesArr = np.vstack((trainingFeaturesArr, fd))
 	trainingLabelsArr = np.append(trainingLabelsArr, label+1)
-	if nImageCounter>=nImagesCutoff:
-		break
+	# if nImageCounter>=nImagesCutoff:
+	# 	break
 
 print 'Number of positive', nPositiveImageCounter
 print 'Number of negative_images', nImageCounter
@@ -166,5 +170,5 @@ print("Accuracy: "+str(accuracy_score(y_test, y_pred)))
 print('\n')
 print(classification_report(y_test, y_pred))
 
-filename = 'nine_class_svm.sav'
+filename = 'sixtyone_class_svm.sav'
 pickle.dump(model, open(filename, 'wb'))
