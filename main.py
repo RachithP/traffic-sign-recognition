@@ -89,13 +89,13 @@ def classifier_init():
 							histogramNormType, L2HysThreshold, gammaCorrection, nlevels, SignedGradients)
 
 	# load the model from disk
-	filename = 'correct_sign_2_class_svm.sav'
+	filename = 'sixtyone_class_svm.sav'
 	correct_sign_model = pickle.load(open(filename, 'rb'))
-	filename = 'eight_class_svm.sav'
+	filename = 'sixtyone_class_svm.sav'
 	eight_class_model = pickle.load(open(filename, 'rb'))
-	filename = 'two_class_svm.sav'
+	filename = 'sixtyone_class_svm.sav'
 	two_class_model = pickle.load(open(filename, 'rb'))
-	filename = 'nine_class_svm.sav'
+	filename = 'sixtyone_class_svm.sav'
 	nine_class_model = pickle.load(open(filename, 'rb'))
 	filename = 'sixtyone_class_svm.sav'
 	sixtyone_class_model = pickle.load(open(filename, 'rb'))
@@ -189,7 +189,7 @@ def main():
 	files_hsv = glob.glob(path_to_images_hsv + "/*.jpg")
 	files_hsv.sort()
 
-	startIndex = 0
+	startIndex = 1100
 
 	for index in range(startIndex, len(files)):
 		imageLabelPosList = [None, None, None, None, None, None, None, None]
@@ -275,7 +275,7 @@ def main():
 				cv2.rectangle(image_denoise, (x, y), (x + w, y + h), (255, 255, 0), 2)
 				if 0.3 < float(h) / w < 3.3:
 					# cv2.rectangle(final_image, (x, y), (x + w, y + h), (255, 100, 100), 2)
-					scaledWindows = scaleWindows(final_image, (x, y, w, h), 1.1, 3)
+					# scaledWindows = scaleWindows(final_image, (x, y, w, h), 1.1, 3)
 					croppedWindow = final_image[y:y + h, x:x + w]
 					prediction = classifier(croppedWindow, hog, sixtyone_class_model)
 					if prediction != 62 and prediction in trainingLabelShortened:
@@ -283,13 +283,13 @@ def main():
 						# cv2.putText(final_image,str(prediction), (x, y),cv2.FONT_HERSHEY_SIMPLEX,1,(255,255,255),2)
 						labelIndex = findIndex(prediction)
 						imageLabelPosList[labelIndex] = [x, y, w, h, prediction]
-					for scaleWindow in scaledWindows:
-						prediction = classifier(scaleWindow, hog, sixtyone_class_model)
-						if prediction != 62 and prediction in trainingLabelShortened:
-							# cv2.rectangle(final_image, (x, y), (x + w, y + h), (255, 100, 100), 2)
-							# cv2.putText(final_image,str(prediction), (x, y),cv2.FONT_HERSHEY_SIMPLEX,1,(255,255,255),2)
-							labelIndex = findIndex(prediction)
-							imageLabelPosList[labelIndex] = [x, y, w, h, prediction]
+					# for scaleWindow in scaledWindows:
+					# 	prediction = classifier(scaleWindow, hog, sixtyone_class_model)
+					# 	if prediction != 62 and prediction in trainingLabelShortened:
+					# 		# cv2.rectangle(final_image, (x, y), (x + w, y + h), (255, 100, 100), 2)
+					# 		# cv2.putText(final_image,str(prediction), (x, y),cv2.FONT_HERSHEY_SIMPLEX,1,(255,255,255),2)
+					# 		labelIndex = findIndex(prediction)
+					# 		imageLabelPosList[labelIndex] = [x, y, w, h, prediction]
 		fullLabelPosList.append(imageLabelPosList)
 
 		if index >= startIndex + 3:
@@ -298,10 +298,10 @@ def main():
 			image2 = cv2.imread(path_to_images + "/frame" + str(index - 2) + ".jpg", -1)
 			image3 = cv2.imread(path_to_images + "/frame" + str(index - 1) + ".jpg", -1)
 			image4 = cv2.imread(path_to_images + "/frame" + str(index) + ".jpg", -1)
-			list1 = fullLabelPosList[Newindex - 3]
-			list2 = fullLabelPosList[Newindex - 2]
-			list3 = fullLabelPosList[Newindex - 1]
-			list4 = fullLabelPosList[Newindex]
+			list1 = fullLabelPosList[index - 3]
+			list2 = fullLabelPosList[index - 2]
+			list3 = fullLabelPosList[index - 1]
+			list4 = fullLabelPosList[index]
 			print '--------'
 			flag = 0
 			for k in range(8):
@@ -318,41 +318,38 @@ def main():
 					print addImage.shape
 					temp = cv2.resize(addImage, (list1[k][2], list1[k][3]))
 					print temp.shape
-					print image1[list1[k][1]:list1[k][1] + list1[k][3], list1[k][0] - list1[k][2]:list1[k][0]].shape
-					image1[list1[k][1]:list1[k][1] + list1[k][3], list1[k][0] - list1[k][2]:list1[k][0]] = temp
+					print list1[k][0]
+					print list1[k][1]
+					print list1[k][2]
+					print list1[k][3]
+					print image1[list1[k][1]+list1[k][3]:list1[k][1]+list1[k][3]+list1[k][3],list1[k][0]:list1[k][0]+list1[k][2]].shape
+					image1[list1[k][1]+list1[k][3]:list1[k][1]+list1[k][3]+list1[k][3],list1[k][0]:list1[k][0]+list1[k][2]] = temp
 
 					temp = cv2.resize(addImage, (list2[k][2], list2[k][3]))
-					image2[list2[k][1]:list2[k][1] + list2[k][3], list2[k][0] - list2[k][2]:list2[k][0]] = temp
+					image2[list2[k][1]+list2[k][3]:list2[k][1]+list2[k][3]+list2[k][3],list2[k][0]:list2[k][0]+list2[k][2]] = temp
 
 					temp = cv2.resize(addImage, (list3[k][2], list3[k][3]))
-					image3[list3[k][1]:list3[k][1] + list3[k][3], list3[k][0] - list3[k][2]:list3[k][0]] = temp
+					image3[list3[k][1]+list3[k][3]:list3[k][1]+list3[k][3]+list3[k][3],list3[k][0]:list3[k][0]+list3[k][2]] = temp
 
 					temp = cv2.resize(addImage, (list4[k][2], list4[k][3]))
-					image4[list4[k][1]:list4[k][1] + list4[k][3], list4[k][0] - list4[k][2]:list4[k][0]] = temp
-					cv2.rectangle(image1, (list1[k][0], list1[k][1]),
-								  (list1[k][0] + list1[k][2], list1[k][1] + list1[k][3]), (255, 100, 100), 2)
-					cv2.rectangle(image2, (list2[k][0], list2[k][1]),
-								  (list2[k][0] + list2[k][2], list2[k][1] + list2[k][3]), (255, 100, 100), 2)
-					cv2.rectangle(image3, (list3[k][0], list3[k][1]),
-								  (list3[k][0] + list3[k][2], list3[k][1] + list3[k][3]), (255, 100, 100), 2)
-					cv2.rectangle(image4, (list4[k][0], list4[k][1]),
-								  (list4[k][0] + list4[k][2], list4[k][1] + list4[k][3]), (255, 100, 100), 2)
-					cv2.putText(image1, str(list1[k][4]), (list1[k][0], list1[k][1]), cv2.FONT_HERSHEY_SIMPLEX, 1,
-								(255, 255, 255), 2)
-					cv2.putText(image2, str(list2[k][4]), (list2[k][0], list2[k][1]), cv2.FONT_HERSHEY_SIMPLEX, 1,
-								(255, 255, 255), 2)
-					cv2.putText(image3, str(list3[k][4]), (list3[k][0], list3[k][1]), cv2.FONT_HERSHEY_SIMPLEX, 1,
-								(255, 255, 255), 2)
-					cv2.putText(image4, str(list4[k][4]), (list4[k][0], list4[k][1]), cv2.FONT_HERSHEY_SIMPLEX, 1,
-								(255, 255, 255), 2)
-			if Newindex - 3 not in goodIndices:
-				cv2.imwrite("outputs/testing/final/frame" + str(Newindex - 3) + ".jpg", image1)
+					image4[list4[k][1]+list4[k][3]:list4[k][1]+list4[k][3]+list4[k][3],list4[k][0]:list4[k][0]+list4[k][2]] = temp
 
-			if Newindex - 2 not in goodIndices:
-				cv2.imwrite("outputs/testing/final/frame" + str(Newindex - 2) + ".jpg", image2)
+					cv2.rectangle(image1, (list1[k][0], list1[k][1]), (list1[k][0] + list1[k][2], list1[k][1] + list1[k][3]), (255, 100, 100), 2)
+					cv2.rectangle(image2, (list2[k][0], list2[k][1]), (list2[k][0] + list2[k][2], list2[k][1] + list2[k][3]), (255, 100, 100), 2)
+					cv2.rectangle(image3, (list3[k][0], list3[k][1]), (list3[k][0] + list3[k][2], list3[k][1] + list3[k][3]), (255, 100, 100), 2)
+					cv2.rectangle(image4, (list4[k][0], list4[k][1]), (list4[k][0] + list4[k][2], list4[k][1] + list4[k][3]), (255, 100, 100), 2)
+					cv2.putText(image1,str(list1[k][4]), (list1[k][0], list1[k][1]),cv2.FONT_HERSHEY_SIMPLEX,1,(255,255,255),2)
+					cv2.putText(image2,str(list2[k][4]), (list2[k][0], list2[k][1]),cv2.FONT_HERSHEY_SIMPLEX,1,(255,255,255),2)
+					cv2.putText(image3,str(list3[k][4]), (list3[k][0], list3[k][1]),cv2.FONT_HERSHEY_SIMPLEX,1,(255,255,255),2)
+					cv2.putText(image4,str(list4[k][4]), (list4[k][0], list4[k][1]),cv2.FONT_HERSHEY_SIMPLEX,1,(255,255,255),2)
+			if Newindex-3 not in goodIndices:
+				cv2.imwrite("outputs/testing/final/frame"+str(Newindex-3)+".jpg", image1)
 
-			if Newindex - 1 not in goodIndices:
-				cv2.imwrite("outputs/testing/final/frame" + str(Newindex - 1) + ".jpg", image3)
+			if Newindex-2 not in goodIndices:
+				cv2.imwrite("outputs/testing/final/frame"+str(Newindex-2)+".jpg", image2)
+
+			if Newindex-1 not in goodIndices:
+				cv2.imwrite("outputs/testing/final/frame"+str(Newindex-1)+".jpg", image3)
 
 			if Newindex not in goodIndices:
 				cv2.imwrite("outputs/testing/final/frame" + str(Newindex) + ".jpg", image4)
